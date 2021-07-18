@@ -139,7 +139,7 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 		v1 = u1 + mass * ((u2 - u1).Dot(N) * N);
 		v2 = u2 + mass * ((u1 - u2).Dot(N) * N);
 
-		go->vel = v1; //d
+		go->vel = v1;
 		go2->vel = v2;
 	}
 	else if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_WALL)
