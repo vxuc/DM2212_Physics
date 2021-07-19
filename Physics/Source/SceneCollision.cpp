@@ -29,29 +29,59 @@ void SceneCollision::Init()
 
 	m_ghost = new GameObject(GameObject::GO_BALL);
 
-	int n = 8;
-	for (int i = 0; i < n; i++)
-	{
-		GameObject* go = FetchGO();
-		go->type = GameObject::GO_WALL;
-		go->active = true;
-		go->scale.Set(2, 12, 1);
-		go->normal.Set(cos(Math::DegreeToRadian(i * 360.f / n)), sin(Math::DegreeToRadian(i * 360.f / n)), 0);
-		go->pos = Vector3(m_worldWidth * 0.5, m_worldHeight * 0.5, 0) + (go->normal * (3.375 * n));
-	}
+	//int n = 8;
+	//for (int i = 0; i < n; i++)
+	//{
+	//	GameObject* go = FetchGO();
+	//	go->type = GameObject::GO_WALL;
+	//	go->active = true;
+	//	go->scale.Set(2, 12, 1);
+	//	go->normal.Set(cos(Math::DegreeToRadian(i * 360.f / n)), sin(Math::DegreeToRadian(i * 360.f / n)), 0);
+	//	go->pos = Vector3(m_worldWidth * 0.5, m_worldHeight * 0.5, 0) + (go->normal * (3.375 * n));
+	//}
+	//GameObject* go = FetchGO();
+	//go->type = GameObject::GO_WALL;
+	//go->active = true;
+	//go->scale.Set(2, 12, 1);
+	//go->normal.Set(0, 1, 0);
+	//go->pos = Vector3(m_worldWidth * 0.5, m_worldHeight * 0.5, 0);
+
+	//for (int i = -1; i <= 1; i += 2)
+	//{
+	//	GameObject* go2 = FetchGO();
+	//	go2->type = GameObject::GO_PILLAR;
+	//	go2->scale.Set(go->scale.x, go->scale.x, 1);
+	//	go2->pos = Vector3(go->pos.x + i * go->scale.y, go->pos.y, 0);
+	//}
+
+	//thick wall
 	GameObject* go = FetchGO();
 	go->type = GameObject::GO_WALL;
 	go->active = true;
-	go->scale.Set(2, 12, 1);
+	go->scale.Set(12, 12, 1);
 	go->normal.Set(0, 1, 0);
 	go->pos = Vector3(m_worldWidth * 0.5, m_worldHeight * 0.5, 0);
-	for (int i = -1; i < 2; i += 2)
+	GameObject* go2 = FetchGO();
+	go2->type = GameObject::GO_WALL;
+	go2->active = true;
+	go2->scale.Set(12, 12, 1);
+	go2->normal.Set(1, 0, 0);
+	go2->pos = Vector3(m_worldWidth * 0.5, m_worldHeight * 0.5, 0);
+	for (int i = -1; i <= 1; i += 2)
 	{
-		GameObject* go = FetchGO();
-		go->type = GameObject::GO_PILLAR;
-		go->active = true;
-		go->scale.Set(.2, .2, .2);
-		go->pos = Vector3(m_worldWidth * 0.5 + (i * 15), m_worldHeight * 0.5, 0);
+		GameObject* go3 = FetchGO();
+		go3->type = GameObject::GO_PILLAR;
+		go3->active = true;
+		go3->scale.Set(0.2, 0.2, 0.2);
+		go3->pos = Vector3(go->pos.x + i * go->scale.y, go->pos.y - i * go->scale.y, 0);
+	}
+	for (int i = -1; i <= 1; i += 2)
+	{
+		GameObject* go4 = FetchGO();
+		go4->type = GameObject::GO_PILLAR;
+		go4->active = true;
+		go4->scale.Set(0.2, 0.2, 0.2);
+		go4->pos = Vector3(go->pos.x + i * go->scale.y, go->pos.y + i * go->scale.y, 0);
 	}
 }
 
@@ -85,14 +115,15 @@ void SceneCollision::ReturnGO(GameObject *go)
 
 bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 {
-	if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_BALL)
+	if (go2->type == GameObject::GO_BALL)
 	{
 		Vector3 displacement = go2->pos - go->pos;
 		float combinedRadii = go->scale.x + go2->scale.x;
-		if ((displacement.LengthSquared() < combinedRadii * combinedRadii) && (go2->vel - go->vel).Dot(go2->pos - go->pos) < 0)
+		if ((displacement.LengthSquared() < combinedRadii * combinedRadii) && 
+			(go2->vel - go->vel).Dot(go2->pos - go->pos) < 0) //prevents internal collision with ball and ball
 			return true;
 	}
-	else if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_WALL)
+	else if (go2->type == GameObject::GO_WALL)
 	{
 		Vector3 N = go2->normal;
 		Vector3 NP = Vector3(N.y, -N.x, 0);
@@ -101,21 +132,25 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 		float h_2 = go2->scale.x;
 		float l_2 = go2->scale.y;
 
-		if ((abs((w0_b1).Dot(N)) < r + h_2) &&
-			abs((w0_b1).Dot(NP) < r + l_2))
+		if (w0_b1.Dot(N) < 0) //flip normal based on ball dir
+			N = -N;
+
+		if ((w0_b1).Dot(N) < r + h_2 &&
+			Math::FAbs((w0_b1).Dot(NP)) < l_2 &&
+			N.Dot(go->vel) > 0) //prevents internal collision with ball and wall
 		{
-			std::cout << "COLLIDED" << std::endl;
 			return true;
 		}
 	}
-	else if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_PILLAR)
+	else if (go2->type == GameObject::GO_PILLAR)
 	{
 		Vector3 u = go->vel;
 		Vector3 p2_p1 = go2->pos - go->pos;
 		float r1 = go->scale.x;
 		float r2 = go2->scale.x;
 
-		if ((abs(p2_p1.Length()) < r1 + r2) && ((p2_p1.Dot(u)) > 0))
+		if (p2_p1.Length() < r1 + r2 && 
+			p2_p1.Dot(u) > 0) //prevents internal collision with ball and pillar
 		{
 			std::cout << "COLLIDED" << std::endl;
 			return true;
@@ -126,31 +161,35 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 
 void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 {
-	if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_BALL)
+	if (go2->type == GameObject::GO_BALL)
 	{
 		m1 = go->mass;
 		m2 = go2->mass;
 		u1 = go->vel;
 		u2 = go2->vel;
 
-		Vector3 N = (go->pos - go2->pos).Normalized();
-		float mass = (2 * m2 / (m1 + m2));
+		//Vector3 N = (go->pos - go2->pos).Normalized();
+		//float mass = (2 * m2 / (m1 + m2));
 
-		v1 = u1 + mass * ((u2 - u1).Dot(N) * N);
-		v2 = u2 + mass * ((u1 - u2).Dot(N) * N);
+		//v1 = u1 + mass * ((u2 - u1).Dot(N) * N);
+		//v2 = u2 + mass * ((u1 - u2).Dot(N) * N);
+
+		float dp = (u1 - u2).Dot(go->pos - go2->pos) / (go->pos - go2->pos).LengthSquared();
+		v1 = u1 - 2 * m2 / (m1 + m2) * dp * (go->pos - go2->pos);
+		v2 = u2 - 2 * m1 / (m1 + m2) * dp * (go2->pos - go->pos);
 
 		go->vel = v1;
 		go2->vel = v2;
 	}
-	else if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_WALL)
+	else if (go2->type == GameObject::GO_WALL)
 	{
 		Vector3 N = go2->normal;
 		Vector3 u = go->vel;
 		go->vel = u - (2 * u.Dot(N)) * N;
 	}
-	else if (go->type == GameObject::GO_BALL && go2->type == GameObject::GO_PILLAR)
+	else if (go2->type == GameObject::GO_PILLAR)
 	{
-		Vector3 N = go2->normal;
+		Vector3 N = (go2->pos - go->pos).Normalized();
 		Vector3 u = go->vel;
 		go->vel = u - (2 * u.Dot(N)) * N;
 	}
@@ -296,17 +335,10 @@ void SceneCollision::Update(double dt)
 					if (CheckCollision(ball, other, dt))
 					{
 						CollisionResponse(ball, other);
-						break;
+						
 					}
-					//Exercise 8b: store values in auditing variables
 				}
 			}
-			
-			//Exercise 10: handle collision using momentum swap instead
-
-			//Exercise 12: improve inner loop to prevent double collision
-
-			//Exercise 13: improve collision detection algorithm [solution to be given later]
 		}
 	}
 }
@@ -336,9 +368,8 @@ void SceneCollision::RenderGO(GameObject *go)
 	case GameObject::GO_PILLAR:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
-		modelStack.Rotate(90, 1, 0, 0);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CYLINDER], false);
+		RenderMesh(meshList[GEO_BALL], false);
 		modelStack.PopMatrix();
 		break;
 	}
