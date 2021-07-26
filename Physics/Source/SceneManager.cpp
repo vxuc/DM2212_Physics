@@ -10,15 +10,6 @@ SceneManager::SceneManager()
 
 	Scene* scene0 = new SceneCollision;
 	SceneList.push_back(scene0);
-
-	Scene* scene1 = new SceneLevel1;
-	SceneList.push_back(scene1);
-
-	Scene* scene2 = new SceneLevel2;
-	SceneList.push_back(scene2);
-
-	Scene* scene3 = new SceneLevel3;
-	SceneList.push_back(scene3);
 }
 
 SceneManager::~SceneManager()

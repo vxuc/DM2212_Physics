@@ -24,6 +24,8 @@ public:
 	bool CheckCollision(GameObject* go, GameObject* go2, float dt);
 
 	void CollisionResponse(GameObject* go, GameObject* go2);
+
+	void CreateThickWall(Vector3 scale, Vector3 pos);
 protected:
 
 	//Physics
@@ -37,6 +39,16 @@ protected:
 	//Auditing
 	float m1, m2;
 	Vector3 u1, u2, v1, v2;
+	Vector3 m_gravity;
+
+	//Flipper
+	GameObject* m_flipperLeft;
+	GameObject* m_flipperRight;
+	GameObject* m_spring;
+	double leftFlipperTimer;
+	double rightFlipperTimer;
+	float rotationLeft;
+	float rotationRight;
 };
 
 #endif
