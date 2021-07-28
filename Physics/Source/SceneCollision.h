@@ -49,6 +49,15 @@ protected:
 	double rightFlipperTimer;
 	float rotationLeft;
 	float rotationRight;
+	bool leftFlipperOn;
+	bool rightFlipperOn;
+
+private:
+	const float FLIPPER_UP_SPEED = 1000.f;
+	const float FLIPPER_DOWN_SPEED = 500.f;
+	const float FLIPPER_MIN_ROTATION = 45.f;
+	const float FLIPPER_MAX_ROTATION = 135.f;
+	const float FLIPPER_COOLDOWN_TIMER = 0.1f;
 };
 
 #endif

@@ -11,6 +11,7 @@ struct GameObject
 		GO_BALL,
 		GO_WALL,
 		GO_SPRING,
+		GO_FLIPPER,
 		GO_PILLAR,
 		GO_CUBE,
 		GO_BACKGROUND,
@@ -48,6 +49,7 @@ struct GameObject
 	bool active;
 	bool isSplitable;
 	bool isHit;
+	bool isLeft;
 	float mass;
 	float health;
 	float maxHealth;

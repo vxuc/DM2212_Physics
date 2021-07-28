@@ -13,7 +13,8 @@ GameObject::GameObject(GAMEOBJECT_TYPE typeValue)
 	momentOfInertia(1.f),
 	angularVelocity(0.f),
 	timer(0.0f),
-	isHit(false)
+	isHit(false),
+	isLeft(false)
 {
 }
 
