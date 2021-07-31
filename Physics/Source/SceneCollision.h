@@ -28,6 +28,8 @@ public:
 	void CreateThickWall(Vector3 scale, Vector3 pos);
 
 	void RenderMap();
+
+	void SpawnPowerup(double dt);
 protected:
 
 	//Physics
@@ -54,7 +56,8 @@ protected:
 	bool leftFlipperOn;
 	bool rightFlipperOn;
 
-	std::vector<GameObject*> m_platformList;
+	//POWERUP
+	float powerUpSpawnTime = 0.f;
 
 private:
 	const float FLIPPER_UP_SPEED = 1000.f;

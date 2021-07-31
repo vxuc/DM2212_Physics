@@ -9,8 +9,12 @@ struct GameObject
 	{
 		GO_NONE = 0,
 		GO_BALL,
+		GO_SPHERE_ENERGY,
+		GO_BLACKHOLE,
 		GO_WALL,
 		GO_WALL_ENERGY,
+		GO_WALL_ONESIDED,
+		GO_BIG_BALL_POWERUP,
 		GO_SPRING,
 		GO_FLIPPER,
 		GO_PILLAR,
@@ -51,6 +55,7 @@ struct GameObject
 	bool isSplitable;
 	bool isHit;
 	bool isLeft;
+	bool isSucked;
 	float mass;
 	float health;
 	float maxHealth;

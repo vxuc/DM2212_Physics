@@ -14,7 +14,8 @@ GameObject::GameObject(GAMEOBJECT_TYPE typeValue)
 	angularVelocity(0.f),
 	timer(0.0f),
 	isHit(false),
-	isLeft(false)
+	isLeft(false),
+	isSucked(false)
 {
 }
 
