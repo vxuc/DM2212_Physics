@@ -59,6 +59,10 @@ protected:
 	//POWERUP
 	float powerUpSpawnTime = 0.f;
 
+	//GAME
+	bool activateBallDrop = false;
+	float ballDropTimer = 0.f;
+
 private:
 	const float FLIPPER_UP_SPEED = 1000.f;
 	const float FLIPPER_DOWN_SPEED = 500.f;
