@@ -26,6 +26,8 @@ public:
 	void CollisionResponse(GameObject* go, GameObject* go2);
 
 	void CreateThickWall(Vector3 scale, Vector3 pos);
+
+	void RenderMap();
 protected:
 
 	//Physics
@@ -52,12 +54,15 @@ protected:
 	bool leftFlipperOn;
 	bool rightFlipperOn;
 
+	std::vector<GameObject*> m_platformList;
+
 private:
 	const float FLIPPER_UP_SPEED = 1000.f;
 	const float FLIPPER_DOWN_SPEED = 500.f;
-	const float FLIPPER_MIN_ROTATION = 45.f;
-	const float FLIPPER_MAX_ROTATION = 135.f;
+	const float FLIPPER_MIN_ROTATION = 75.f;
+	const float FLIPPER_MAX_ROTATION = 105.f;
 	const float FLIPPER_COOLDOWN_TIMER = 0.1f;
+	const float BALL_MAX_SPEED = 200.f;
 };
 
 #endif
