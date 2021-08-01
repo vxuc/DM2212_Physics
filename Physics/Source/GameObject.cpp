@@ -15,7 +15,8 @@ GameObject::GameObject(GAMEOBJECT_TYPE typeValue)
 	timer(0.0f),
 	isHit(false),
 	isLeft(false),
-	isSucked(false)
+	isSucked(false),
+	allowCollision(true)
 {
 }
 

@@ -128,9 +128,11 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 {
 	if (go2->type == GameObject::GO_BALL || go2->type == GameObject::GO_SPHERE_ENERGY)
 	{
+		if (!go->allowCollision)
+			return false;
 		Vector3 displacement = go2->pos - go->pos;
 		float combinedRadii = go->scale.x + go2->scale.x;
-		if ((displacement.LengthSquared() < combinedRadii * combinedRadii) && 
+		if ((displacement.LengthSquared() < combinedRadii * combinedRadii) &&
 			(go2->vel - go->vel).Dot(go2->pos - go->pos) < 0) //prevents internal collision with ball and ball
 			return true;
 	}
@@ -140,7 +142,10 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 		float combinedRadii = go->scale.x + go2->scale.x;
 		if ((displacement.LengthSquared() < combinedRadii * combinedRadii) &&
 			(go2->vel - go->vel).Dot(go2->pos - go->pos) < 0) //prevents internal collision with ball and ball
+		{
+			go->allowCollision = false;
 			return true;
+		}
 	}
 	else if (go2->type == GameObject::GO_WALL || go2->type == GameObject::GO_SPRING || go2->type == GameObject::GO_FLIPPER || go2->type == GameObject::GO_WALL_ENERGY || 
 		go2->type == GameObject::GO_BIG_BALL_POWERUP || go2->type == GameObject::GO_SPAWN_BALLS_POWERUP)
@@ -205,7 +210,7 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 			return true;
 		}
 	}
-	else if (go2->type == GameObject::GO_PILLAR)
+	else if (go2->type == GameObject::GO_PILLAR || go2->type == GameObject::GO_FLIPPER_PILLAR)
 	{
 		Vector3 u = go->vel;
 		Vector3 p2_p1 = go2->pos - go->pos;
@@ -216,6 +221,7 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 			p2_p1.Dot(u) > 0) //prevents internal collision with ball and pillar
 		{
 			return true;
+			std::cout << "DAD" << std::endl;
 		}
 	}
 	return false;
@@ -247,6 +253,8 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 		Vector3 N = (go->pos - go2->pos).Normalized();
 		Vector3 u = go->vel;
 		go->vel = u - (2 * u.Dot(N)) * N * 1.5f;
+
+		score += u.Length();
 	}
 	else if (go2->type == GameObject::GO_BLACKHOLE)
 	{
@@ -322,6 +330,8 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 			Vector3 line = w0_b1 - projection;
 			go->pos = go2->pos - line + N * (go2->scale.x + go->scale.x); //set the ball to the top of the wall in the direction of the wall's normal
 		}
+
+		score += u.Length();
 	}
 	else if (go2->type == GameObject::GO_PILLAR)
 	{
@@ -389,21 +399,45 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 			}
 			else
 			{
+				float angularVelocity = 2 * ((Math::PI) / 5.f);
 				Vector3 N = go2->normal;
 				Vector3 u = go->vel;
-				go->vel = u - (2 * u.Dot(N)) * N * (rotationLeft / 45.f);
-
-				Vector3 w0_b1 = go2->pos - go->pos;
-				if (w0_b1.Dot(N) > 0)
-					N = -N;
-
-				Vector3 projection = (w0_b1.Dot(N) / N.Dot(N)) * N; //find the projection of the direction vector on the normal
-				if (projection.Length() < go2->scale.x + go->scale.x)
-				{
-					Vector3 line = w0_b1 - projection;
-					go->pos = go2->pos - line + N * (go2->scale.x + go->scale.x); //set the ball to the top of the wall in the direction of the wall's normal
-				}
+				go->vel = u - (2 * u.Dot(N)) * N * (rotationLeft / 45) * angularVelocity;
 			}
+
+			//Vector3 wN = go2->normal;
+			//Vector3 w0_b1 = go2->pos - go->pos;
+			//if (w0_b1.Dot(wN) > 0)
+			//	wN = -wN;
+
+			//Vector3 projection = (w0_b1.Dot(wN) / wN.Dot(wN)) * wN; //find the projection of the direction vector on the normal
+			//Vector3 line;
+			//line.SetZero();
+			//if (projection.Length() < go2->scale.x + go->scale.x)
+			//{
+			//	line = w0_b1 - projection;
+			//}
+
+			//m1 = go->mass;
+			//m2 = go2->mass;
+			//u1 = go->vel;
+			//go2->vel = wN * line.Length() * m_flipperLeft->angularVelocity;
+			//u2 = go2->vel;
+			//
+
+			//if (u2.IsZero())
+			//{
+			//	Vector3 N = go2->normal;
+			//	Vector3 u = go->vel;
+			//	go->vel = u - (2 * u.Dot(N)) * N;
+			//	return;
+			//}
+
+			//Vector3 N = (go->pos - go2->pos).Normalized();
+			//float mass = (2 * m2 / (m1 + m2));
+
+			//v1 = u1 + mass * ((u2 - u1).Dot(N) * N);
+			//go->vel = v1;
 		}
 		else
 		{
@@ -426,22 +460,47 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 			}
 			else
 			{
+				float angularVelocity = 2 * ((Math::PI) / 5.f);
 				Vector3 N = go2->normal;
 				Vector3 u = go->vel;
-				go->vel = u - (2 * u.Dot(N)) * N * (rotationRight / 45.f);
-
-				Vector3 w0_b1 = go2->pos - go->pos;
-				if (w0_b1.Dot(N) > 0)
-					N = -N;
-
-				Vector3 projection = (w0_b1.Dot(N) / N.Dot(N)) * N; //find the projection of the direction vector on the normal
-				if (projection.Length() < go2->scale.x + go->scale.x)
-				{
-					Vector3 line = w0_b1 - projection;
-					go->pos = go2->pos - line + N * (go2->scale.x + go->scale.x); //set the ball to the top of the wall in the direction of the wall's normal
-				}
+				go->vel = u - (2 * u.Dot(N)) * N * (rotationLeft / 45) * angularVelocity;
 			}
 		}
+	}
+	else if (go2->type == GameObject::GO_FLIPPER_PILLAR)
+	{
+		if (go2->isLeft) {
+			if (!leftFlipperOn)
+			{
+				Vector3 N = (go2->pos - go->pos).Normalized();
+				Vector3 u = go->vel;
+				go->vel = u - (2 * u.Dot(N)) * N;
+			}
+			else
+			{
+				float angularVelocity = 2 * ((Math::PI) / 1.f);
+				Vector3 N = (go2->pos - go->pos).Normalized();
+				Vector3 u = go->vel;
+				go->vel = u - (2 * u.Dot(N)) * N * (rotationRight / 45) * angularVelocity;
+			}
+		}
+		else
+		{
+			if (!rightFlipperOn)
+			{
+				Vector3 N = (go2->pos - go->pos).Normalized();
+				Vector3 u = go->vel;
+				go->vel = u - (2 * u.Dot(N)) * N;
+			}
+			else
+			{
+				float angularVelocity = 2 * ((Math::PI) / 1.f);
+				Vector3 N = (go2->pos - go->pos).Normalized();
+				Vector3 u = go->vel;
+				go->vel = u - (2 * u.Dot(N)) * N * (rotationRight / 45) * angularVelocity;
+			}
+		}
+		
 	}
 }
 
@@ -514,6 +573,7 @@ void SceneCollision::RenderMap()
 	m_flipperLeft->active = true;
 	m_flipperLeft->isLeft = true;
 	m_flipperLeft->scale = Vector3(2, 10, 1);
+	//m_flipperLeft->mass = 100;
 	m_flipperLeft->normal = Vector3(cos(Math::DegreeToRadian(75.f)), sin(Math::DegreeToRadian(75.f)), 0);
 	m_flipperLeft->pos = Vector3(m_worldWidth * 0.5 - m_flipperLeft->scale.y * 1.5, m_worldHeight * 0.1 - m_flipperLeft->scale.x * 1.5f, 0);
 	m_goList.push_back(m_flipperLeft);
@@ -521,10 +581,27 @@ void SceneCollision::RenderMap()
 	m_flipperRight = new GameObject(GameObject::GO_FLIPPER);
 	m_flipperRight->active = true;
 	m_flipperRight->isLeft = false;
+	//m_flipperRight->mass = 100;
 	m_flipperRight->scale = Vector3(2, 10, 1);
 	m_flipperRight->normal = Vector3(cos(Math::DegreeToRadian(105.f)), sin(Math::DegreeToRadian(105.f)), 0);
 	m_flipperRight->pos = Vector3(m_worldWidth * 0.5 + m_flipperRight->scale.y * 1.5, m_worldHeight * 0.1 - m_flipperRight->scale.x * 1.5f, 0);
 	m_goList.push_back(m_flipperRight);
+
+	m_flipperLeftPillar = new GameObject(GameObject::GO_FLIPPER_PILLAR);
+	m_flipperLeftPillar->active = true;
+	m_flipperLeftPillar->isLeft = true;
+	//m_flipperLeftPillar->mass = 100;
+	m_flipperLeftPillar->scale = Vector3(2, 2, 1);
+	m_flipperLeftPillar->pos = m_flipperLeft->pos + Vector3(cos(Math::DegreeToRadian(rotationLeft - 90.f) * m_flipperLeft->scale.y), sin(Math::DegreeToRadian(rotationLeft - 90.f) * m_flipperLeft->scale.y), 0);
+	m_goList.push_back(m_flipperLeftPillar);
+
+	m_flipperRightPillar = new GameObject(GameObject::GO_FLIPPER_PILLAR);
+	m_flipperRightPillar->active = true;
+	m_flipperRightPillar->scale = Vector3(2, 2, 1);
+	m_flipperRightPillar->isLeft = false;
+	//m_flipperRightPillar->mass = 100;
+	m_flipperRightPillar->pos = m_flipperRight->pos + Vector3(cos(Math::DegreeToRadian(rotationRight + 90.f) * m_flipperRight->scale.y), sin(Math::DegreeToRadian(rotationRight + 90.f) * m_flipperRight->scale.y), 0);
+	m_goList.push_back(m_flipperRightPillar);
 
 	m_spring = new GameObject(GameObject::GO_SPRING);
 	m_spring->active = true;
@@ -589,6 +666,12 @@ void SceneCollision::RenderMap()
 	go->scale.Set(2.5, 25.75, 1);
 	go->normal.Set(1, 0, 0);
 	go->pos = Vector3(m_worldWidth * 0.2475 - go->scale.x * go->scale.x, m_worldHeight * 0.725, 0);
+	go = FetchGO();
+	go->type = GameObject::GO_PILLAR;
+	go->active = true;
+	go->scale.Set(3.2, 3.2, 1);
+	go->normal.Set(1, 0, 0);
+	go->pos = Vector3(m_worldWidth * 0.229, m_worldHeight * 0.61, 0);
 
 	//bottom left walls
 	go = FetchGO();
@@ -744,8 +827,14 @@ void SceneCollision::Update(double dt)
 	//Flippers
 	if (Application::IsKeyPressed('A'))
 	{
+		//m_flipperLeft->angularVelocity += 2 * ((Math::PI) / 1.0f);
 		leftFlipperOn = true;
 	}
+	else
+	{
+		m_flipperLeft->angularVelocity = 0;
+	}
+
 	if (leftFlipperOn)
 	{
 		rotationLeft += FLIPPER_UP_SPEED * dt;
@@ -783,10 +872,22 @@ void SceneCollision::Update(double dt)
 		rotationRight += FLIPPER_DOWN_SPEED * dt;
 	}
 
+	//m_flipperLeft->angularVelocity = Math::Clamp(m_flipperLeft->angularVelocity, -5.0f, 5.0f);
+	//rotationLeft = m_flipperLeft->angularVelocity * dt;
+	//std::cout << rotationLeft << std::endl;
+	//m_flipperLeft->normal.Set(m_flipperLeft->normal.x * cosf(rotationLeft) - m_flipperLeft->normal.y * sinf(rotationLeft),
+	//	m_flipperLeft->normal.x * sinf(rotationLeft) + m_flipperLeft->normal.y * cosf(rotationLeft)); //turn a vector by angle
+
+	//m_flipperLeft->normal.x = Math::Clamp(m_flipperLeft->normal.x, cos(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), cos(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
+	//m_flipperLeft->normal.y = Math::Clamp(m_flipperLeft->normal.y, sin(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), sin(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
+
 	rotationLeft = Math::Clamp(rotationLeft, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
-	rotationRight = Math::Clamp(rotationRight, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
+	rotationRight = Math::Clamp(rotationRight, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);	
 	m_flipperLeft->normal = Vector3(cos(Math::DegreeToRadian(rotationLeft)), sin(Math::DegreeToRadian(rotationLeft)), 0);
 	m_flipperRight->normal = Vector3(cos(Math::DegreeToRadian(rotationRight)), sin(Math::DegreeToRadian(rotationRight)), 0);
+	m_flipperLeftPillar->pos = m_flipperLeft->pos + Vector3(cos(Math::DegreeToRadian(rotationLeft - 90)) * m_flipperLeft->scale.y, sin(Math::DegreeToRadian(rotationLeft - 90)) * m_flipperLeft->scale.y, 0);
+	m_flipperRightPillar->pos = m_flipperRight->pos + Vector3(cos(Math::DegreeToRadian(rotationRight + 90)) * m_flipperRight->scale.y, sin(Math::DegreeToRadian(rotationRight + 90)) * m_flipperRight->scale.y, 0);
+
 	//m_flipperLeft->vel = Vector3(0, 10, 0);
 	
 	//Spring
@@ -801,7 +902,7 @@ void SceneCollision::Update(double dt)
 		}
 		else {
 			float pullDistance = m_worldHeight * 0.05f - m_spring->pos.y;
-			m_spring->vel = Vector3(0, 100 * pullDistance, 0);
+			m_spring->vel = Vector3(0, 50 * pullDistance, 0);
 		}
 	}
       
@@ -915,8 +1016,9 @@ void SceneCollision::Update(double dt)
 						if (blackHole->type != GameObject::GO_BLACKHOLE)
 							continue;
 						
-						if (go->pos.x + blackHole->scale.x * 0.5f >= blackHole->pos.x && go->pos.x - blackHole->scale.x * 0.5f <= blackHole->pos.x ||
-							go->pos.y + blackHole->scale.y * 0.5f >= blackHole->pos.y && go->pos.y - blackHole->scale.y * 0.5f <= blackHole->pos.y)
+						Vector3 displacement = blackHole->pos - go->pos;
+						float combinedRadii = go->scale.x + blackHole->scale.x / 3;
+						if ((displacement.LengthSquared() < combinedRadii * combinedRadii))
 						{
 							go->pos = blackHole->pos;
 						}
@@ -988,7 +1090,7 @@ void SceneCollision::Update(double dt)
 					{
 						if (go->pos.x == go2->pos.x && go->pos.y == go2->pos.y)
 						{
-							go2->vel = Vector3(Math::RandFloatMinMax(-1, -2) + Math::RandFloatMinMax(3, 4) * 200, Math::RandFloatMinMax(-1, -2) + Math::RandFloatMinMax(3, 4) * 200, 0);
+							go2->vel = Vector3(Math::RandFloatMinMax(-1, 1) * 2000, Math::RandFloatMinMax(-1, 1) * 2000, 0);
 							go2->isSucked = false;
 							go2->timer = 0;
 						}
@@ -1009,7 +1111,8 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_BALL], false);
+		meshList[GEO_BALL]->material.kAmbient.Set(0.69f, 0.60f, 0.84f);
+		RenderMesh(meshList[GEO_BALL], true);
 		modelStack.PopMatrix();
 		//Exercise 11: think of a way to give balls different colors
 		break;
@@ -1018,14 +1121,16 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.46f, 0.61f, 0.79f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_PILLAR:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_BALL], false);
+		meshList[GEO_BALL]->material.kAmbient.Set(0.37f, 1.f, 0.71f);
+		RenderMesh(meshList[GEO_BALL], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_SPRING:
@@ -1033,15 +1138,17 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.69f, 0.60f, 0.84f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_FLIPPER:
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
+		modelStack.Translate(go->pos.x, go->pos.y, -1);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.41f, 0.37f, 1.f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_WALL_ENERGY:
@@ -1049,14 +1156,16 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.37f, 1.f, 0.71f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_SPHERE_ENERGY:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_BALL], false);
+		meshList[GEO_BALL]->material.kAmbient.Set(1.f, 1.f, 0.56f);
+		RenderMesh(meshList[GEO_BALL], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_WALL_ONESIDED:
@@ -1064,14 +1173,16 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.46f, 0.61f, 0.79f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_BLACKHOLE:
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
+		modelStack.Translate(go->pos.x, go->pos.y, 10);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_BALL], false);
+		meshList[GEO_BALL]->material.kAmbient.Set(1.f, 0.58f, 0.67);
+		RenderMesh(meshList[GEO_BALL], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_BIG_BALL_POWERUP:
@@ -1079,7 +1190,8 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(1.f, 0.41f, 0.37f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_WALL_BALLDROP:
@@ -1087,7 +1199,8 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.46f, 0.61f, 0.79f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_SPAWN_BALLS_POWERUP:
@@ -1095,7 +1208,16 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_CUBE], false);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.37f, 0.96f, 1.f);
+		RenderMesh(meshList[GEO_CUBE], true);
+		modelStack.PopMatrix();
+		break;
+	case GameObject::GO_FLIPPER_PILLAR:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);		
+		meshList[GEO_BALL]->material.kAmbient.Set(0.41f, 0.37f, 1.f);
+		RenderMesh(meshList[GEO_BALL], true);
 		modelStack.PopMatrix();
 		break;
 	}
@@ -1152,7 +1274,7 @@ void SceneCollision::Render()
 
 	std::ostringstream ss2;
 	ss2.precision(3);
-	ss2 << "Speed: " << m_speed;
+	ss2 << "Score: " << score;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss2.str(), Color(0, 1, 0), 3, 0, 6);
 	
 	std::ostringstream ss;
@@ -1165,22 +1287,6 @@ void SceneCollision::Render()
 	ss.str("");
 	ss << "Object Count: " << m_objectCount;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 9);
-
-	ss.str("");
-	ss << "Initial KE: " << 0.5f * m1 * u1.LengthSquared() + 0.5f * m2 * u2.LengthSquared();
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 12);
-
-	ss.str("");
-	ss << "Final KE: " << 0.5f * m1 * v1.LengthSquared() + 0.5f * m2 * v2.LengthSquared();
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 15);
-	 
-	ss.str("");
-	ss << "Initial Momentum: " << u1 * m1 + u2 * m2;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 18);
-	
-	ss.str("");
-	ss << "Final Momentum: " << v1 * m1 + v2 * m2;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 21);
 }
 
 void SceneCollision::Exit()

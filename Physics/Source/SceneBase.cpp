@@ -269,7 +269,7 @@ void SceneBase::Init()
 	meshList[GEO_ENEMY_TURRET]->textureID = LoadTGA("Image//Enemy//enemyTurret.tga");
 	meshList[GEO_ENEMY_TURRET]->material.kAmbient.Set(0, 1, 0);
 
-	bLightEnabled = false;
+	bLightEnabled = true;
 }
 
 void SceneBase::Update(double dt)

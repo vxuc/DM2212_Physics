@@ -12,6 +12,7 @@ struct GameObject
 		GO_SPHERE_ENERGY,
 		GO_BLACKHOLE,
 		GO_WALL,
+		GO_FLIPPER_PILLAR,
 		GO_WALL_ENERGY,
 		GO_WALL_ONESIDED,
 		GO_WALL_BALLDROP,
@@ -58,6 +59,7 @@ struct GameObject
 	bool isHit;
 	bool isLeft;
 	bool isSucked;
+	bool allowCollision;
 	float mass;
 	float health;
 	float maxHealth;

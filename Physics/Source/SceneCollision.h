@@ -48,11 +48,14 @@ protected:
 	//Flipper
 	GameObject* m_flipperLeft;
 	GameObject* m_flipperRight;
+	GameObject* m_flipperLeftPillar;
+	GameObject* m_flipperRightPillar;
 	GameObject* m_spring;
 	double leftFlipperTimer;
 	double rightFlipperTimer;
 	float rotationLeft;
 	float rotationRight;
+	float periodT = 1.f;
 	bool leftFlipperOn;
 	bool rightFlipperOn;
 
@@ -62,6 +65,8 @@ protected:
 	//GAME
 	bool activateBallDrop = false;
 	float ballDropTimer = 0.f;
+
+	float score = 0.f;
 
 private:
 	const float FLIPPER_UP_SPEED = 1000.f;
