@@ -504,7 +504,7 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 	}
 }
 
-void SceneCollision::CreateThickWall(Vector3 _scale, Vector3 _pos)
+void SceneCollision::CreateThickWall(Vector3 _scale, Vector3 _pos, bool isElastic)
 {
 	////thick wall
 	//GameObject* go = FetchGO();
@@ -533,28 +533,37 @@ void SceneCollision::CreateThickWall(Vector3 _scale, Vector3 _pos)
 	//	go4->scale.Set(1,1,1);
 	//	go4->pos = Vector3(go->pos.x + i * go->scale.y, go->pos.y + i * go->scale.y, 0);
 	//}
-	
+
 	//Top and bottom
 	GameObject* go = FetchGO();
-	go->type = GameObject::GO_WALL_ENERGY;
+
 	go->scale = _scale;
 	go->normal.Set(0, 1, 0);
 	go->pos = _pos;
 
 	//Left and Right
 	GameObject* go2 = FetchGO();
-	go2->type = GameObject::GO_WALL_ENERGY;
-	go2->scale = _scale;
+	go2->scale = Vector3(_scale.y, _scale.x, 1);
 	go2->normal.Set(1, 0, 0);
 	go2->pos = _pos;
 
+	if (isElastic)
+	{
+		go->type = GameObject::GO_WALL_ENERGY;
+		go2->type = GameObject::GO_WALL_ENERGY;
+	}
+	else
+	{
+		go->type = GameObject::GO_WALL;
+		go2->type = GameObject::GO_WALL;
+	}
 	for (int i = -1; i <= 1; i += 2)
 	{
 		GameObject* go3 = FetchGO();
 		go3->type = GameObject::GO_PILLAR;
 		go3->active = true;
 		go3->scale.Set(1,1,1);
-		go3->pos = Vector3(go->pos.x + i * go->scale.y * 0.9f, go->pos.y - i * go->scale.y * 0.9f, 0);
+		go3->pos = Vector3(go->pos.x + i * go->scale.y - i * go3->scale.x, go->pos.y - i * go->scale.x + i * go3->scale.y, 0);
 	}
 	for (int i = -1; i <= 1; i += 2)
 	{
@@ -562,7 +571,7 @@ void SceneCollision::CreateThickWall(Vector3 _scale, Vector3 _pos)
 		go4->type = GameObject::GO_PILLAR;
 		go4->active = true;
 		go4->scale.Set(1,1,1);
-		go4->pos = Vector3(go->pos.x + i * go->scale.y * 0.9f, go->pos.y + i * go->scale.y * 0.9f, 0);
+		go4->pos = Vector3(go->pos.x + i * go->scale.y - i * go4->scale.x, go->pos.y + i * go->scale.x - i * go4->scale.y, 0);
 	}
 }
 
@@ -615,10 +624,13 @@ void SceneCollision::RenderMap()
 	ball->scale = Vector3(3, 3, 3);
 	ball->mass = 2;
 	ball->pos = Vector3(m_worldWidth * 0.785, m_worldHeight * 0.1, 0) + m_spring->normal * (m_spring->scale.x + ball->scale.x + 5);
-
-	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.4f, m_worldHeight * 0.4f, 0));
-	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.6f, m_worldHeight * 0.4f, 0));
-
+	
+	for (int i = 1; i < 5; i++)
+	{
+		CreateThickWall(Vector3(3, 1, 1), Vector3(m_worldWidth * 0.43f + (i * 10), m_worldHeight * 0.275f, 0), false);
+	}
+	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.35f, m_worldHeight * 0.375f, 0), true);
+	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.65f, m_worldHeight * 0.375f, 0), true);
 
 	//energy spheres
 	for (int i = 1; i < 6; i++)
@@ -633,7 +645,7 @@ void SceneCollision::RenderMap()
 	GameObject* go = FetchGO();
 	go->type = GameObject::GO_BLACKHOLE;
 	go->scale.Set(10, 10, 1);
-	go->pos = Vector3(m_worldWidth * 0.5, m_worldHeight * 0.65f, 0);
+	go->pos = Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.65f, 0);
 
 	//right walls
 	go = FetchGO();
@@ -875,6 +887,7 @@ void SceneCollision::Update(double dt)
 
 	//m_flipperLeft->normal.x = Math::Clamp(m_flipperLeft->normal.x, cos(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), cos(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
 	//m_flipperLeft->normal.y = Math::Clamp(m_flipperLeft->normal.y, sin(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), sin(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
+	
 	std::cout << rotationLeft << std::endl;
 	rotationLeft = Math::Clamp(rotationLeft, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
 	std::cout << rotationLeft << std::endl;

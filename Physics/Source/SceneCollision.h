@@ -25,7 +25,7 @@ public:
 
 	void CollisionResponse(GameObject* go, GameObject* go2);
 
-	void CreateThickWall(Vector3 scale, Vector3 pos);
+	void CreateThickWall(Vector3 scale, Vector3 pos, bool isElastic);
 
 	void RenderMap();
 
