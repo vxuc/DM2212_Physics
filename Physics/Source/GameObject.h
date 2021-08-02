@@ -43,7 +43,7 @@ struct GameObject
 		GO_ENEMY_TURRET,
 		GO_MANA,
 		GO_ALLY_SHIP,
-		GO_TOTAL, //must be last
+		GO_TOTAL //must be last
 	};
 
 	GAMEOBJECT_TYPE type;

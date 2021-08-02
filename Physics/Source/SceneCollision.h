@@ -53,8 +53,8 @@ protected:
 	GameObject* m_spring;
 	double leftFlipperTimer;
 	double rightFlipperTimer;
-	float rotationLeft;
-	float rotationRight;
+	float rotationLeft = 0.f;
+	float rotationRight = 0.f;
 	float periodT = 1.f;
 	bool leftFlipperOn;
 	bool rightFlipperOn;

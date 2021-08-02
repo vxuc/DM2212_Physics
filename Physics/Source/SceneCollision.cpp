@@ -830,10 +830,6 @@ void SceneCollision::Update(double dt)
 		//m_flipperLeft->angularVelocity += 2 * ((Math::PI) / 1.0f);
 		leftFlipperOn = true;
 	}
-	else
-	{
-		m_flipperLeft->angularVelocity = 0;
-	}
 
 	if (leftFlipperOn)
 	{
@@ -850,7 +846,6 @@ void SceneCollision::Update(double dt)
 	{
 		rotationLeft -= FLIPPER_DOWN_SPEED * dt;
 	}
-
 
 	if (Application::IsKeyPressed('D'))
 	{
@@ -880,8 +875,9 @@ void SceneCollision::Update(double dt)
 
 	//m_flipperLeft->normal.x = Math::Clamp(m_flipperLeft->normal.x, cos(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), cos(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
 	//m_flipperLeft->normal.y = Math::Clamp(m_flipperLeft->normal.y, sin(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), sin(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
-
+	std::cout << rotationLeft << std::endl;
 	rotationLeft = Math::Clamp(rotationLeft, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
+	std::cout << rotationLeft << std::endl;
 	rotationRight = Math::Clamp(rotationRight, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);	
 	m_flipperLeft->normal = Vector3(cos(Math::DegreeToRadian(rotationLeft)), sin(Math::DegreeToRadian(rotationLeft)), 0);
 	m_flipperRight->normal = Vector3(cos(Math::DegreeToRadian(rotationRight)), sin(Math::DegreeToRadian(rotationRight)), 0);
@@ -1092,6 +1088,7 @@ void SceneCollision::Update(double dt)
 						{
 							go2->vel = Vector3(Math::RandFloatMinMax(-1, 1) * 2000, Math::RandFloatMinMax(-1, 1) * 2000, 0);
 							go2->isSucked = false;
+							go2->allowCollision = true;
 							go2->timer = 0;
 						}
 					}
@@ -1273,13 +1270,12 @@ void SceneCollision::Render()
 	//Exercise 8c: Render initial and final momentum
 
 	std::ostringstream ss2;
-	ss2.precision(3);
-	ss2 << "Score: " << score;
+	ss2 << "Score: " << (int)score;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss2.str(), Color(0, 1, 0), 3, 0, 6);
 	
 	std::ostringstream ss;
 	ss.precision(5);
-	ss << "FPS: " << fps;
+	ss << "FPS: " << fps;  
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 3);
 	
 	RenderTextOnScreen(meshList[GEO_TEXT], "Collision", Color(0, 1, 0), 3, 0, 0);
