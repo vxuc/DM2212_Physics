@@ -584,7 +584,7 @@ void SceneCollision::RenderMap()
 	m_flipperLeft->scale = Vector3(2, 10, 1);
 	//m_flipperLeft->mass = 100;
 	m_flipperLeft->normal = Vector3(cos(Math::DegreeToRadian(75.f)), sin(Math::DegreeToRadian(75.f)), 0);
-	m_flipperLeft->pos = Vector3(m_worldWidth * 0.5 - m_flipperLeft->scale.y * 1.5, m_worldHeight * 0.1 - m_flipperLeft->scale.x * 1.5f, 0);
+	m_flipperLeft->pos = Vector3(m_worldWidth * 0.435f, m_worldHeight * 0.1 - m_flipperLeft->scale.x * 1.5f, 0);
 	m_goList.push_back(m_flipperLeft);
 
 	m_flipperRight = new GameObject(GameObject::GO_FLIPPER);
@@ -593,7 +593,7 @@ void SceneCollision::RenderMap()
 	//m_flipperRight->mass = 100;
 	m_flipperRight->scale = Vector3(2, 10, 1);
 	m_flipperRight->normal = Vector3(cos(Math::DegreeToRadian(105.f)), sin(Math::DegreeToRadian(105.f)), 0);
-	m_flipperRight->pos = Vector3(m_worldWidth * 0.5 + m_flipperRight->scale.y * 1.5, m_worldHeight * 0.1 - m_flipperRight->scale.x * 1.5f, 0);
+	m_flipperRight->pos = Vector3(m_worldWidth * 0.565f, m_worldHeight * 0.1 - m_flipperRight->scale.x * 1.5f, 0);
 	m_goList.push_back(m_flipperRight);
 
 	m_flipperLeftPillar = new GameObject(GameObject::GO_FLIPPER_PILLAR);
@@ -689,29 +689,31 @@ void SceneCollision::RenderMap()
 	go = FetchGO();
 	go->type = GameObject::GO_WALL;
 	go->active = true;
-	go->scale.Set(9.6, 39.75, 1);
+	go->scale.Set(9.6, 30, 1);
 	go->normal = Vector3(0, 1, 0);
-	go->pos = Vector3(m_worldWidth * 0.5 - go->scale.y - (m_flipperLeft->scale.y * 1.5), go->scale.x, 0);
+	go->pos = Vector3(m_worldWidth * 0.435f - go->scale.y, go->scale.x, 0);
 	go = FetchGO();
 	go->type = GameObject::GO_WALL;
 	go->active = true;
-	go->scale.Set(10, 39.75, 1);
+	go->scale.Set(8, 29, 1);
 	go->normal = Vector3(cos(Math::DegreeToRadian(75.f)), sin(Math::DegreeToRadian(75.f)), 0);
-	go->pos = Vector3(m_worldWidth * 0.5 - go->scale.y * 1.05 - (m_flipperLeft->scale.y * 1.5), go->scale.x * 2, 0);
+	go->pos = Vector3(m_worldWidth * 0.435f - go->scale.y - 1, m_worldHeight * 0.1f + go->scale.x * 0.25f - 2.95, 0);
+	CreateThickWall(Vector3(17, 2, 1), Vector3(m_worldWidth * 0.272f, m_worldHeight * 0.087f, 0), false);
 
 	//bottom right walls
 	go = FetchGO();
 	go->type = GameObject::GO_WALL;
 	go->active = true;
-	go->scale.Set(9.6, 39.75, 1);
+	go->scale.Set(9.6, 30, 1);
 	go->normal = Vector3(0, 1, 0);
-	go->pos = Vector3(m_worldWidth * 0.5 + go->scale.y + (m_flipperLeft->scale.y * 1.5), go->scale.x, 0);
+	go->pos = Vector3(m_worldWidth * 0.565f + go->scale.y, go->scale.x, 0);
 	go = FetchGO();
 	go->type = GameObject::GO_WALL;
 	go->active = true;
-	go->scale.Set(10, 39.75, 1);
+	go->scale.Set(8, 29, 1);
 	go->normal = Vector3(cos(Math::DegreeToRadian(105.f)), sin(Math::DegreeToRadian(105.f)), 0);
-	go->pos = Vector3(m_worldWidth * 0.5 + go->scale.y * 1.05 + (m_flipperLeft->scale.y * 1.5), go->scale.x * 2, 0);
+	go->pos = Vector3(m_worldWidth * 0.565f + go->scale.y + 1, m_worldHeight * 0.1f + go->scale.x * 0.25f - 2.95, 0);
+	CreateThickWall(Vector3(17, 2, 1), Vector3(m_worldWidth * 0.728f, m_worldHeight * 0.087f, 0), false);
 
 	//top walls
 	go = FetchGO();
