@@ -39,6 +39,7 @@ protected:
 	float m_worldHeight;
 	GameObject *m_ghost;
 	int m_objectCount;
+	int m_ballCount;
 
 	//Auditing
 	float m1, m2;
@@ -51,13 +52,13 @@ protected:
 	GameObject* m_flipperLeftPillar;
 	GameObject* m_flipperRightPillar;
 	GameObject* m_spring;
-	double leftFlipperTimer;
-	double rightFlipperTimer;
+	double leftFlipperTimer = 0.f;
+	double rightFlipperTimer = 0.f;
 	float rotationLeft = 0.f;
 	float rotationRight = 0.f;
 	float periodT = 1.f;
-	bool leftFlipperOn;
-	bool rightFlipperOn;
+	bool leftFlipperOn = false;
+	bool rightFlipperOn = false;
 
 	//POWERUP
 	float powerUpSpawnTime = 0.f;
@@ -65,8 +66,9 @@ protected:
 	//GAME
 	bool activateBallDrop = false;
 	float ballDropTimer = 0.f;
-
 	float score = 0.f;
+	bool startGame = false;
+	float highscore = 0.f;
 
 private:
 	const float FLIPPER_UP_SPEED = 1000.f;

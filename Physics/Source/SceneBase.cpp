@@ -115,6 +115,7 @@ void SceneBase::Init()
 	meshList[GEO_BALL] = MeshBuilder::GenerateSphere("ball", Color(1, 1, 1), 10, 10, 1.f);
 	meshList[GEO_CUBE] = MeshBuilder::GenerateCube("cube", Color(1, 1, 1), 2.f);
 	meshList[GEO_CYLINDER] = MeshBuilder::GenerateCylinder("cylinder", Color(1, 0, 0), 36, 12, 1);
+	meshList[GEO_RING] = MeshBuilder::GenerateRing("ring", Color(1, 1, 1), 20, 3, 2.75);
 	meshList[GEO_HEALTHBAR] = MeshBuilder::GenerateCube("healthbar", Color(0, 1, 0), 1.f);
 	meshList[GEO_ENEMY_HEALTHBAR] = MeshBuilder::GenerateCube("healthbar", Color(1, 0, 0), 1.f);
 	meshList[GEO_NITROBAR] = MeshBuilder::GenerateCube("healthbar", Color(1, 1, 0), 1.f);

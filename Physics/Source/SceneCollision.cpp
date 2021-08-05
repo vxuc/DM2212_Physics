@@ -1,7 +1,12 @@
 #include "SceneCollision.h"
 #include "GL\glew.h"
 #include "Application.h"
+#include <iostream>
 #include <sstream>
+#include <iomanip>
+#include <fstream>
+#include <string>
+#include <algorithm>
 
 SceneCollision::SceneCollision()
 {
@@ -29,17 +34,32 @@ void SceneCollision::Init()
 
 	m_ghost = new GameObject(GameObject::GO_BALL);
 
-	m_gravity = Vector3(0, -50, 0);
+	m_gravity = Vector3(0, -75, 0);
+
+	std::fstream inFile;
+	inFile.open("highscore.txt");
+	std::string line;
+	std::string highscoreString;
+
+	if (inFile.fail()) //if file fails to load
+	{
+		std::cout << "Error loading highscore file" << std::endl;
+	}
+	while (std::getline(inFile, line))
+	{
+		std::stringstream sss(line);
+		std::getline(sss, highscoreString);
+		highscore = stof(highscoreString);
+	}
 
 	RenderMap();
-
 
 	//spawn top balls
 	for (int i = -2; i < 3; i++)
 	{
 		GameObject* go2 = FetchGO();
-		go2->type = GameObject::GO_BALL;
-		go2->scale.Set(3, 3, 3);
+		go2->type = GameObject::GO_BALL_TOP;
+		go2->scale.Set(4, 4, 4);
 		go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight * 0.99f, 0);
 	}
 
@@ -126,7 +146,7 @@ void SceneCollision::ReturnGO(GameObject *go)
 
 bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 {
-	if (go2->type == GameObject::GO_BALL || go2->type == GameObject::GO_SPHERE_ENERGY)
+	if (go2->type == GameObject::GO_BALL || go2->type == GameObject::GO_SPHERE_ENERGY || go2->type == GameObject::GO_BALL_TOP)
 	{
 		if (!go->allowCollision)
 			return false;
@@ -148,7 +168,7 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 		}
 	}
 	else if (go2->type == GameObject::GO_WALL || go2->type == GameObject::GO_SPRING || go2->type == GameObject::GO_FLIPPER || go2->type == GameObject::GO_WALL_ENERGY || 
-		go2->type == GameObject::GO_BIG_BALL_POWERUP || go2->type == GameObject::GO_SPAWN_BALLS_POWERUP)
+		go2->type == GameObject::GO_BIG_BALL_POWERUP || go2->type == GameObject::GO_SPAWN_BALLS_POWERUP || go2->type == GameObject::GO_WALL_POINTS)
 	{
 		Vector3 N = go2->normal;
 		Vector3 NP = Vector3(N.y, -N.x, 0);
@@ -229,7 +249,7 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 
 void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 {
-	if (go2->type == GameObject::GO_BALL)
+	if (go2->type == GameObject::GO_BALL || go2->type == GameObject::GO_BALL_TOP)
 	{
 		m1 = go->mass;
 		m2 = go2->mass;
@@ -242,7 +262,7 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 		//v1 = u1 + mass * ((u2 - u1).Dot(N) * N);
 		//v2 = u2 + mass * ((u1 - u2).Dot(N) * N);
 
-		float dp = (u1 - u2).Dot(go->pos - go2->pos) / (go->pos - go2->pos).LengthSquared();
+		float dp = (u1 - u2).Dot(go->pos - go2->pos) / (go->pos - go2->pos).LengthSquared();  
 		v1 = u1 - 2 * m2 / (m1 + m2) * dp * (go->pos - go2->pos);
 		v2 = u2 - 2 * m1 / (m1 + m2) * dp * (go2->pos - go->pos);
 		go->vel = v1;
@@ -250,6 +270,7 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 	}
 	else if (go2->type == GameObject::GO_SPHERE_ENERGY)
 	{
+		go2->scale -= Vector3(0.3f, 0.3f, 0);
 		Vector3 N = (go->pos - go2->pos).Normalized();
 		Vector3 u = go->vel;
 		go->vel = u - (2 * u.Dot(N)) * N * 1.5f;
@@ -309,12 +330,12 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 	}
 	else if (go2->type == GameObject::GO_WALL_ENERGY)
 	{
-		if (go->scale.x > 3)
+		if (go->scale.x > 4)
 		{
 			go->scale.x -= 0.01f * go->vel.Length();
 			go->scale.y -= 0.01f * go->vel.Length();
-			go->scale.x = Math::Clamp(go->scale.x, 3.f, 8.f);
-			go->scale.y = Math::Clamp(go->scale.y, 3.f, 8.f);
+			go->scale.x = Math::Clamp(go->scale.x, 4.f, 8.f);
+			go->scale.y = Math::Clamp(go->scale.y, 4.f, 8.f);
 		}
 		Vector3 N = go2->normal;
 		Vector3 u = go->vel;
@@ -335,12 +356,12 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 	}
 	else if (go2->type == GameObject::GO_PILLAR)
 	{
-		if (go->scale.x > 3)
+		if (go->scale.x > 4)
 		{
 			go->scale.x -= 0.01f * go->vel.Length();
 			go->scale.y -= 0.01f * go->vel.Length();
-			go->scale.x = Math::Clamp(go->scale.x, 3.f, 8.f);
-			go->scale.y = Math::Clamp(go->scale.y, 3.f, 8.f);
+			go->scale.x = Math::Clamp(go->scale.x, 4.f, 8.f);
+			go->scale.y = Math::Clamp(go->scale.y, 4.f, 8.f);
 		}
 		Vector3 N = (go2->pos - go->pos).Normalized();
 		Vector3 u = go->vel;
@@ -404,40 +425,6 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 				Vector3 u = go->vel;
 				go->vel = u - (2 * u.Dot(N)) * N * (rotationLeft / 45) * angularVelocity;
 			}
-
-			//Vector3 wN = go2->normal;
-			//Vector3 w0_b1 = go2->pos - go->pos;
-			//if (w0_b1.Dot(wN) > 0)
-			//	wN = -wN;
-
-			//Vector3 projection = (w0_b1.Dot(wN) / wN.Dot(wN)) * wN; //find the projection of the direction vector on the normal
-			//Vector3 line;
-			//line.SetZero();
-			//if (projection.Length() < go2->scale.x + go->scale.x)
-			//{
-			//	line = w0_b1 - projection;
-			//}
-
-			//m1 = go->mass;
-			//m2 = go2->mass;
-			//u1 = go->vel;
-			//go2->vel = wN * line.Length() * m_flipperLeft->angularVelocity;
-			//u2 = go2->vel;
-			//
-
-			//if (u2.IsZero())
-			//{
-			//	Vector3 N = go2->normal;
-			//	Vector3 u = go->vel;
-			//	go->vel = u - (2 * u.Dot(N)) * N;
-			//	return;
-			//}
-
-			//Vector3 N = (go->pos - go2->pos).Normalized();
-			//float mass = (2 * m2 / (m1 + m2));
-
-			//v1 = u1 + mass * ((u2 - u1).Dot(N) * N);
-			//go->vel = v1;
 		}
 		else
 		{
@@ -500,7 +487,10 @@ void SceneCollision::CollisionResponse(GameObject* go, GameObject* go2)
 				go->vel = u - (2 * u.Dot(N)) * N * (rotationRight / 45) * angularVelocity;
 			}
 		}
-		
+	}
+	else if (go2->type == GameObject::GO_WALL_POINTS)
+	{
+		score *= 1.1f;
 	}
 }
 
@@ -621,30 +611,33 @@ void SceneCollision::RenderMap()
 
 	//starting ball
 	GameObject* ball = FetchGO();
-	ball->scale = Vector3(3, 3, 3);
+	ball->type = GameObject::GO_BALL;
+	ball->scale = Vector3(4, 4, 4);
 	ball->mass = 2;
 	ball->pos = Vector3(m_worldWidth * 0.785, m_worldHeight * 0.1, 0) + m_spring->normal * (m_spring->scale.x + ball->scale.x + 5);
 	
-	for (int i = 1; i < 5; i++)
+	for (int i = 1; i < 12; i++)
 	{
-		CreateThickWall(Vector3(3, 1, 1), Vector3(m_worldWidth * 0.43f + (i * 10), m_worldHeight * 0.275f, 0), false);
+		if (i > 4 && i < 8)
+			continue;
+		CreateThickWall(Vector3(3, 1, 1), Vector3(m_worldWidth * 0.25f + (i * 15), m_worldHeight * 0.35f, 0), false);
 	}
-	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.35f, m_worldHeight * 0.375f, 0), true);
-	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.65f, m_worldHeight * 0.375f, 0), true);
+	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.35f, m_worldHeight * 0.55f, 0), true);
+	CreateThickWall(Vector3(6, 6, 1), Vector3(m_worldWidth * 0.65f, m_worldHeight * 0.55f, 0), true);
 
 	//energy spheres
-	for (int i = 1; i < 6; i++)
+	for (int i = 1; i < 5; i++)
 	{
 		GameObject* sphere = FetchGO();
 		sphere->type = GameObject::GO_SPHERE_ENERGY;
-		sphere->scale.Set(5, 5, 5);
-		sphere->pos = Vector3(m_worldWidth * 0.3f + (i * 25), m_worldHeight * 0.8f, 0);
+		sphere->scale.Set(7, 7, 7);
+		sphere->pos = Vector3(m_worldWidth * 0.3f + (i * 30), m_worldHeight * 0.8f, 0);
 	}
 
 	//black hole
 	GameObject* go = FetchGO();
 	go->type = GameObject::GO_BLACKHOLE;
-	go->scale.Set(10, 10, 1);
+	go->scale.Set(4, 4, 4);
 	go->pos = Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.65f, 0);
 
 	//right walls
@@ -684,6 +677,12 @@ void SceneCollision::RenderMap()
 	go->scale.Set(3.2, 3.2, 1);
 	go->normal.Set(1, 0, 0);
 	go->pos = Vector3(m_worldWidth * 0.229, m_worldHeight * 0.61, 0);
+	go = FetchGO();
+	go->type = GameObject::GO_WALL_POINTS;
+	go->active = true;
+	go->scale.Set(9, 1, 1);
+	go->normal.Set(cos(Math::DegreeToRadian(0)), sin(Math::DegreeToRadian(180)), 0);
+	go->pos = Vector3(m_worldWidth * 0.124, m_worldHeight * 0.79, 0);
 
 	//bottom left walls
 	go = FetchGO();
@@ -796,7 +795,7 @@ void SceneCollision::SpawnPowerup(double dt)
 		go->active = true;
 		go->scale.Set(2.5, 2.5, 1);
 		go->normal.Set(cos(Math::DegreeToRadian(45)), sin(Math::DegreeToRadian(45)), 0);
-		go->pos = Vector3(Math::RandFloatMinMax(m_worldWidth * 0.3, m_worldWidth * 0.6), m_worldWidth * 0.3, 0);
+		go->pos = Vector3(Math::RandFloatMinMax(m_worldWidth * 0.3, m_worldWidth * 0.6), m_worldHeight * 0.45, 0);
 		powerUpSpawnTime = 0;
 	}
 }
@@ -804,7 +803,9 @@ void SceneCollision::SpawnPowerup(double dt)
 void SceneCollision::Update(double dt)
 {
 	SceneBase::Update(dt);
-	SpawnPowerup(dt);
+
+	if(startGame)
+		SpawnPowerup(dt);
 	
 	if(Application::IsKeyPressed('9'))
 	{
@@ -817,6 +818,11 @@ void SceneCollision::Update(double dt)
 
 	if (activateBallDrop)
 	{
+		for (GameObject* go : m_goList)
+		{
+			if (go->active && go->type == GameObject::GO_BALL_TOP)
+				go->type = GameObject::GO_BALL;
+		}
 		ballDropTimer += dt;
 		if (ballDropTimer > 2)
 		{
@@ -829,9 +835,9 @@ void SceneCollision::Update(double dt)
 			for (int i = -2; i < 3; i++)
 			{
 				GameObject* go2 = FetchGO();
-				go2->type = GameObject::GO_BALL;
-				go2->scale.Set(3, 3, 3);
-				go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight * 0.99f, 0);
+				go2->type = GameObject::GO_BALL_TOP;
+				go2->scale.Set(4, 4, 4);
+				go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight * 0.999f, 0);
 			}
 		}
 	}
@@ -890,35 +896,13 @@ void SceneCollision::Update(double dt)
 	//m_flipperLeft->normal.x = Math::Clamp(m_flipperLeft->normal.x, cos(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), cos(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
 	//m_flipperLeft->normal.y = Math::Clamp(m_flipperLeft->normal.y, sin(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), sin(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
 	
-	std::cout << rotationLeft << std::endl;
 	rotationLeft = Math::Clamp(rotationLeft, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
-	std::cout << rotationLeft << std::endl;
-	rotationRight = Math::Clamp(rotationRight, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);	
+	rotationRight = Math::Clamp(rotationRight, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
+
 	m_flipperLeft->normal = Vector3(cos(Math::DegreeToRadian(rotationLeft)), sin(Math::DegreeToRadian(rotationLeft)), 0);
 	m_flipperRight->normal = Vector3(cos(Math::DegreeToRadian(rotationRight)), sin(Math::DegreeToRadian(rotationRight)), 0);
 	m_flipperLeftPillar->pos = m_flipperLeft->pos + Vector3(cos(Math::DegreeToRadian(rotationLeft - 90)) * m_flipperLeft->scale.y, sin(Math::DegreeToRadian(rotationLeft - 90)) * m_flipperLeft->scale.y, 0);
 	m_flipperRightPillar->pos = m_flipperRight->pos + Vector3(cos(Math::DegreeToRadian(rotationRight + 90)) * m_flipperRight->scale.y, sin(Math::DegreeToRadian(rotationRight + 90)) * m_flipperRight->scale.y, 0);
-
-	//m_flipperLeft->vel = Vector3(0, 10, 0);
-	
-	//Spring
-	if (Application::IsKeyPressed(VK_SPACE))
-	{
-		m_spring->pos.y -= .25f;
-	}
-	else
-	{
-		if (m_spring->pos.y >= m_worldHeight * 0.05f) {
-			m_spring->vel.SetZero();
-		}
-		else {
-			float pullDistance = m_worldHeight * 0.05f - m_spring->pos.y;
-			m_spring->vel = Vector3(0, 50 * pullDistance, 0);
-		}
-	}
-      
-	m_spring->pos.y += m_spring->vel.y * dt * m_speed;
-	m_spring->pos.y = Math::Clamp(m_spring->pos.y, m_spring->scale.x, m_worldHeight * 0.05f);
 
 	//Mouse Section
 	static bool bLButtonState = false;
@@ -954,7 +938,7 @@ void SceneCollision::Update(double dt)
 
 		Vector3 distanceFromGhostPos = m_ghost->pos - Vector3(posX, posY, 0);
 		float scaleBasedOnDistance = distanceFromGhostPos.LengthSquared() * 0.005f;
-		scaleBasedOnDistance = Math::Clamp(scaleBasedOnDistance, 2.f, 10.f);
+		scaleBasedOnDistance = Math::Clamp(scaleBasedOnDistance, 2.f, 8.0f);
 
 		//Exercise 6: spawn small GO_BALL
 		GameObject* smallBall = FetchGO();
@@ -967,7 +951,7 @@ void SceneCollision::Update(double dt)
 	}
 
 	static bool bRButtonState = false;
-	if(!bRButtonState && Application::IsMousePressed(1))
+	if (!bRButtonState && Application::IsMousePressed(1))
 	{
 		bRButtonState = true;
 		std::cout << "RBUTTON DOWN" << std::endl;
@@ -981,7 +965,7 @@ void SceneCollision::Update(double dt)
 
 		m_ghost->pos = Vector3(posX, posY, 0);
 	}
-	else if(bRButtonState && !Application::IsMousePressed(1))
+	else if (bRButtonState && !Application::IsMousePressed(1))
 	{
 		bRButtonState = false;
 		std::cout << "RBUTTON UP" << std::endl;
@@ -1001,17 +985,44 @@ void SceneCollision::Update(double dt)
 		bigBall->vel = m_ghost->pos - Vector3(posX, posY, 0);
 		bigBall->scale = Vector3(3, 3, 3);
 		bigBall->mass = 27;
-	}   
+	}
+
+	//Spring
+	if (Application::IsKeyPressed(VK_SPACE))
+	{
+		if (!startGame)
+			startGame = true;
+		m_spring->pos.y -= .25f;
+	}
+	else
+	{
+		if (m_spring->pos.y >= m_worldHeight * 0.05f) {
+			m_spring->vel.SetZero();
+		}
+		else {
+			float pullDistance = m_worldHeight * 0.05f - m_spring->pos.y;
+			m_spring->vel = Vector3(0, 100 * pullDistance, 0);
+		}
+	}
+      
+	m_spring->pos.y += m_spring->vel.y * dt * m_speed;
+	m_spring->pos.y = Math::Clamp(m_spring->pos.y, m_spring->scale.x, m_worldHeight * 0.05f);
 
 	//Physics Simulation Section
+	int ballCounter = 0;
+	m_ballCount = 0;
 
 	for(std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
 		GameObject *go = (GameObject *)*it;
 		if(go->active)
 		{
-			if (go->type == GameObject::GO_BALL)
+			
+			if (go->type == GameObject::GO_BALL || go->type == GameObject::GO_BALL_TOP)
 			{
+				m_ballCount++;
+				if (go->type == GameObject::GO_BALL)
+					ballCounter++;
 				go->vel.y += m_gravity.y * dt * m_speed;
 				if (go->vel.LengthSquared() >= BALL_MAX_SPEED * BALL_MAX_SPEED)
 				{
@@ -1043,7 +1054,7 @@ void SceneCollision::Update(double dt)
 							continue;
 
 						Vector3 displacement = blackHole->pos - go->pos;
-						float combinedRadii = go->scale.x + blackHole->scale.x * 3;
+						float combinedRadii = go->scale.x + blackHole->scale.x * 6;
 						if ((displacement.LengthSquared() < combinedRadii * combinedRadii))
 						{
 							std::cout << "pulling" << std::endl;
@@ -1051,6 +1062,15 @@ void SceneCollision::Update(double dt)
 							go->vel += pull;
 						}
 					}
+				}
+			}
+
+
+			if (go->type == GameObject::GO_SPHERE_ENERGY)
+			{
+				if (go->scale.x < 7)
+				{
+					go->scale = Vector3(7, 7, 7);
 				}
 			}
 
@@ -1079,9 +1099,9 @@ void SceneCollision::Update(double dt)
 				{
 					GameObject* ball = go;
 					GameObject* other = go2;
-					if (ball->type != GameObject::GO_BALL)
+					if (ball->type != GameObject::GO_BALL && ball->type != GameObject::GO_BALL_TOP)
 					{
-						if (other->type != GameObject::GO_BALL)
+						if (other->type != GameObject::GO_BALL && other->type != GameObject::GO_BALL_TOP)
 							continue;
 						ball = go2;
 						other = go;
@@ -1111,6 +1131,34 @@ void SceneCollision::Update(double dt)
 			}
 		}
 	}
+	std::cout << ballCounter << std::endl;
+	if (ballCounter <= 0)
+	{
+		if (score > highscore)
+		{
+			highscore = score;
+			std::ofstream outFile;
+			outFile.open("highscore.txt");
+			outFile << std::to_string(highscore) << std::endl;
+			outFile.close();
+		}
+
+		score = 0;
+		startGame = false;
+		for (GameObject* go : m_goList)
+		{
+			if (go->active && (go->type == GameObject::GO_BIG_BALL_POWERUP || go->type == GameObject::GO_SPAWN_BALLS_POWERUP))
+			{
+				go->active = false;
+			}
+		}
+		//starting ball
+		GameObject* ball = FetchGO();
+		ball->type = GameObject::GO_BALL;
+		ball->scale = Vector3(4, 4, 4);
+		ball->mass = 2;
+		ball->pos = Vector3(m_worldWidth * 0.785, m_worldHeight * 0.1, 0) + m_spring->normal * (m_spring->scale.x + ball->scale.x + 5);
+	}
 }
 
 
@@ -1127,6 +1175,15 @@ void SceneCollision::RenderGO(GameObject *go)
 		RenderMesh(meshList[GEO_BALL], true);
 		modelStack.PopMatrix();
 		//Exercise 11: think of a way to give balls different colors
+		break;
+	case GameObject::GO_BALL_TOP:
+		//Exercise 4: render a sphere using scale and pos
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		meshList[GEO_BALL]->material.kAmbient.Set(0.69f, 0.60f, 0.84f);
+		RenderMesh(meshList[GEO_BALL], true);
+		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_WALL:
 		modelStack.PushMatrix();
@@ -1185,16 +1242,17 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
 		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		meshList[GEO_CUBE]->material.kAmbient.Set(0.46f, 0.61f, 0.79f);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.26f, 0.41f, 0.79f);
 		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_BLACKHOLE:
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, 10);
+		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
+		modelStack.Rotate(90, 1, 0, 0);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		meshList[GEO_BALL]->material.kAmbient.Set(1.f, 0.58f, 0.67);
-		RenderMesh(meshList[GEO_BALL], true);
+		meshList[GEO_RING]->material.kAmbient.Set(1.f, 0.58f, 0.67);
+		RenderMesh(meshList[GEO_RING], true);
 		modelStack.PopMatrix();
 		break;
 	case GameObject::GO_BIG_BALL_POWERUP:
@@ -1230,6 +1288,15 @@ void SceneCollision::RenderGO(GameObject *go)
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);		
 		meshList[GEO_BALL]->material.kAmbient.Set(0.41f, 0.37f, 1.f);
 		RenderMesh(meshList[GEO_BALL], true);
+		modelStack.PopMatrix();
+		break;
+	case GameObject::GO_WALL_POINTS:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
+		modelStack.Rotate(Math::RadianToDegree(atan2f(go->normal.y, go->normal.x)), 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		meshList[GEO_CUBE]->material.kAmbient.Set(0.07f, 0.1f, 0.2f);
+		RenderMesh(meshList[GEO_CUBE], true);
 		modelStack.PopMatrix();
 		break;
 	}
@@ -1279,6 +1346,13 @@ void SceneCollision::Render()
 		RenderGO(m_spring);
 
 	//On screen text
+	if (!startGame)
+		RenderTextOnScreen(meshList[GEO_TEXT], "PRESS SPACE TO BEGIN!", Color(1, 1, 1), 5, 12, 33);
+
+
+	std::ostringstream ssHS;
+	ssHS << "High Score: " << (int)highscore;
+	RenderTextOnScreen(meshList[GEO_TEXT], ssHS.str(), Color(0, 0.7, 0.7), 3, 0, 9);
 
 	//Exercise 5: Render m_objectCount
 
@@ -1286,18 +1360,20 @@ void SceneCollision::Render()
 
 	std::ostringstream ss2;
 	ss2 << "Score: " << (int)score;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss2.str(), Color(0, 1, 0), 3, 0, 6);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss2.str(), Color(0, 1, 1), 3, 0, 12);
 	
 	std::ostringstream ss;
 	ss.precision(5);
 	ss << "FPS: " << fps;  
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 3);
-	
-	RenderTextOnScreen(meshList[GEO_TEXT], "Collision", Color(0, 1, 0), 3, 0, 0);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(1, 1, 1), 3, 0, 6);
 	
 	ss.str("");
+	ss << "Ball Count: " << m_ballCount;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(1, 1, 1), 3, 0, 3);
+
+	ss.str("");
 	ss << "Object Count: " << m_objectCount;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 0, 9);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(1, 1, 1), 3, 0, 0);
 }
 
 void SceneCollision::Exit()
