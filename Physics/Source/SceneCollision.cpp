@@ -34,7 +34,7 @@ void SceneCollision::Init()
 
 	m_ghost = new GameObject(GameObject::GO_BALL);
 
-	m_gravity = Vector3(0, -75, 0);
+	m_gravity = Vector3(0, -70, 0);
 
 	std::fstream inFile;
 	inFile.open("highscore.txt");
