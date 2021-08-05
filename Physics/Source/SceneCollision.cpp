@@ -679,9 +679,9 @@ void SceneCollision::RenderMap()
 	go = FetchGO();
 	go->type = GameObject::GO_WALL_POINTS;
 	go->active = true;
-	go->scale.Set(9, 1, 1);
-	go->normal.Set(cos(Math::DegreeToRadian(0)), sin(Math::DegreeToRadian(180)), 0);
-	go->pos = Vector3(m_worldWidth * 0.124, m_worldHeight * 0.79, 0);
+	go->scale.Set(10, 1, 1);
+	go->normal.Set(0, 1, 0);
+	go->pos = Vector3(m_worldWidth * 0.23, m_worldHeight * 0.92, 0);
 
 	//bottom left walls
 	go = FetchGO();
@@ -826,10 +826,6 @@ void SceneCollision::Update(double dt)
 		if (ballDropTimer > 2)
 		{
 			activateBallDrop = false;
-			while (true)
-			{
-				break;
-			}
 			//spawn top balls
 			for (int i = -2; i < 3; i++)
 			{
@@ -1157,6 +1153,7 @@ void SceneCollision::Update(double dt)
 		ball->scale = Vector3(4, 4, 4);
 		ball->mass = 2;
 		ball->pos = Vector3(m_worldWidth * 0.785, m_worldHeight * 0.1, 0) + m_spring->normal * (m_spring->scale.x + ball->scale.x + 5);
+		ball->vel.SetZero();
 	}
 }
 
