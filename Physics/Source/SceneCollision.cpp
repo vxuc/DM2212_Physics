@@ -241,7 +241,6 @@ bool SceneCollision::CheckCollision(GameObject* go, GameObject* go2, float dt)
 			p2_p1.Dot(u) > 0) //prevents internal collision with ball and pillar
 		{
 			return true;
-			std::cout << "DAD" << std::endl;
 		}
 	}
 	return false;
