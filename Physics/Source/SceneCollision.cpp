@@ -60,7 +60,7 @@ void SceneCollision::Init()
 		GameObject* go2 = FetchGO();
 		go2->type = GameObject::GO_BALL_TOP;
 		go2->scale.Set(4, 4, 4);
-		go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight * 0.99f, 0);
+		go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight + go2->scale.x * 2, 0);
 	}
 
 	/*GameObject* go = FetchGO();
@@ -825,15 +825,15 @@ void SceneCollision::Update(double dt)
 		ballDropTimer += dt;
 		if (ballDropTimer > 2)
 		{
-			activateBallDrop = false;
 			//spawn top balls
 			for (int i = -2; i < 3; i++)
 			{
 				GameObject* go2 = FetchGO();
 				go2->type = GameObject::GO_BALL_TOP;
 				go2->scale.Set(4, 4, 4);
-				go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight * 0.999f, 0);
+				go2->pos = Vector3(m_worldWidth * 0.5f + (i * 15), m_worldHeight, 0);
 			}
+			activateBallDrop = false;
 		}
 	}
 	else
@@ -882,15 +882,6 @@ void SceneCollision::Update(double dt)
 		rotationRight += FLIPPER_DOWN_SPEED * dt;
 	}
 
-	//m_flipperLeft->angularVelocity = Math::Clamp(m_flipperLeft->angularVelocity, -5.0f, 5.0f);
-	//rotationLeft = m_flipperLeft->angularVelocity * dt;
-	//std::cout << rotationLeft << std::endl;
-	//m_flipperLeft->normal.Set(m_flipperLeft->normal.x * cosf(rotationLeft) - m_flipperLeft->normal.y * sinf(rotationLeft),
-	//	m_flipperLeft->normal.x * sinf(rotationLeft) + m_flipperLeft->normal.y * cosf(rotationLeft)); //turn a vector by angle
-
-	//m_flipperLeft->normal.x = Math::Clamp(m_flipperLeft->normal.x, cos(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), cos(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
-	//m_flipperLeft->normal.y = Math::Clamp(m_flipperLeft->normal.y, sin(Math::DegreeToRadian(FLIPPER_MIN_ROTATION)), sin(Math::DegreeToRadian(FLIPPER_MAX_ROTATION)));
-	
 	rotationLeft = Math::Clamp(rotationLeft, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
 	rotationRight = Math::Clamp(rotationRight, FLIPPER_MIN_ROTATION, FLIPPER_MAX_ROTATION);
 
@@ -899,89 +890,7 @@ void SceneCollision::Update(double dt)
 	m_flipperLeftPillar->pos = m_flipperLeft->pos + Vector3(cos(Math::DegreeToRadian(rotationLeft - 90)) * m_flipperLeft->scale.y, sin(Math::DegreeToRadian(rotationLeft - 90)) * m_flipperLeft->scale.y, 0);
 	m_flipperRightPillar->pos = m_flipperRight->pos + Vector3(cos(Math::DegreeToRadian(rotationRight + 90)) * m_flipperRight->scale.y, sin(Math::DegreeToRadian(rotationRight + 90)) * m_flipperRight->scale.y, 0);
 
-	//Mouse Section
-	static bool bLButtonState = false;
-	if (!bLButtonState && Application::IsMousePressed(0))
-	{
-		bLButtonState = true;
-		std::cout << "LBUTTON DOWN" << std::endl;
-
-		double x, y;
-		Application::GetCursorPos(&x, &y);
-		int w = Application::GetWindowWidth();
-		int h = Application::GetWindowHeight();
-		float posX = x / w * m_worldWidth;
-		float posY = (h - y) / h * m_worldHeight;
-
-		if (!m_ghost->active)
-		{
-			m_ghost->active = true;
-			m_ghost->pos = Vector3(posX, posY, 0);
-		}
-	}
-	else if (bLButtonState && !Application::IsMousePressed(0))
-	{
-		bLButtonState = false;
-		std::cout << "LBUTTON UP" << std::endl;
-
-		double x, y;
-		Application::GetCursorPos(&x, &y);
-		int w = Application::GetWindowWidth();
-		int h = Application::GetWindowHeight();
-		float posX = x / w * m_worldWidth;
-		float posY = (h - y) / h * m_worldHeight;
-
-		Vector3 distanceFromGhostPos = m_ghost->pos - Vector3(posX, posY, 0);
-		float scaleBasedOnDistance = distanceFromGhostPos.LengthSquared() * 0.005f;
-		scaleBasedOnDistance = Math::Clamp(scaleBasedOnDistance, 2.f, 8.0f);
-
-		//Exercise 6: spawn small GO_BALL
-		GameObject* smallBall = FetchGO();
-		smallBall->type = GameObject::GO_BALL;
-		smallBall->pos = m_ghost->pos;
-		smallBall->vel = distanceFromGhostPos;
-		smallBall->scale = Vector3(scaleBasedOnDistance, scaleBasedOnDistance, 1);
-		smallBall->mass = smallBall->scale.x;
-		m_ghost->active = false;
-	}
-
-	static bool bRButtonState = false;
-	if (!bRButtonState && Application::IsMousePressed(1))
-	{
-		bRButtonState = true;
-		std::cout << "RBUTTON DOWN" << std::endl;
-
-		double x, y;
-		Application::GetCursorPos(&x, &y);
-		int w = Application::GetWindowWidth();
-		int h = Application::GetWindowHeight();
-		float posX = x / w * m_worldWidth;
-		float posY = (h - y) / h * m_worldHeight;
-
-		m_ghost->pos = Vector3(posX, posY, 0);
-	}
-	else if (bRButtonState && !Application::IsMousePressed(1))
-	{
-		bRButtonState = false;
-		std::cout << "RBUTTON UP" << std::endl;
-
-		//Exercise 10: spawn large GO_BALL
-		double x, y;
-		Application::GetCursorPos(&x, &y);
-		int w = Application::GetWindowWidth();
-		int h = Application::GetWindowHeight();
-		float posX = x / w * m_worldWidth;
-		float posY = (h - y) / h * m_worldHeight;
-
-		//Exercise 6: spawn big GO_BALL
-		GameObject* bigBall = FetchGO();
-		bigBall->type = GameObject::GO_BALL;
-		bigBall->pos = m_ghost->pos;
-		bigBall->vel = m_ghost->pos - Vector3(posX, posY, 0);
-		bigBall->scale = Vector3(3, 3, 3);
-		bigBall->mass = 27;
-	}
-
+	
 	//Spring
 	if (Application::IsKeyPressed(VK_SPACE))
 	{
@@ -1059,9 +968,7 @@ void SceneCollision::Update(double dt)
 					}
 				}
 			}
-
-
-			if (go->type == GameObject::GO_SPHERE_ENERGY)
+			else if (go->type == GameObject::GO_SPHERE_ENERGY)
 			{
 				if (go->scale.x < 7)
 				{
@@ -1073,11 +980,11 @@ void SceneCollision::Update(double dt)
 			/*if (go->pos.x + go->scale.x > m_worldWidth && go->vel.x > 0 ||
 				go->pos.x - go->scale.x < 0 && go->vel.x < 0) {
 				go->vel.x *= -1;
-			}
-			if (go->pos.y + go->scale.y > m_worldHeight && go->vel.y > 0 ||
-				go->pos.y - go->scale.y < 0 && go->vel.y < 0) {
-				go->vel.y *= -1;
 			}*/
+			if (go->pos.y + go->scale.y > m_worldHeight && go->vel.y > 0) {
+				//go->pos.y - go->scale.y < 0 && go->vel.y < 0) {
+				go->vel.y *= -1;
+			}
 
 			if ((go->pos.x > m_worldWidth + go->scale.x || go->pos.x < 0 - go->scale.x) ||
 				(go->pos.y > m_worldHeight + go->scale.y || go->pos.y < 0 - go->scale.y))
